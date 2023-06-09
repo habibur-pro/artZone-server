@@ -40,13 +40,26 @@ async function run() {
         });
 
         const serviceCollection = client.db('artZone').collection('services')
+        const userCollection = client.db('artZone').collection('users')
 
         app.get('/services', async (req, res) => {
             const result = await serviceCollection.find().toArray()
             res.send(result)
         })
 
+        // add and update user 
+        app.put('/users', async (req, res) => {
+            const user = req.body;
+            const email = req.body.email;
+            const filter = { email: email }
+            const options = { upsert: true }
+            const updatedDoc = {
+                $set: user
+            }
 
+            const result = await userCollection.updateOne(filter, updatedDoc, options)
+            res.send(result)
+        })
 
 
 
