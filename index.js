@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan')
 const { MongoClient, ServerApiVersion } = require('mongodb');
+const jwt = require('jsonwebtoken');
 require('dotenv').config()
 const app = express()
 const port = process.env.PORT || 5000
@@ -12,7 +13,27 @@ app.use(cors())
 app.use(morgan('dev'))
 
 
+// token verify 
+const verifyJWT = (req, res, next) => {
+    const authorization = req.headers.authorization;
+    if (!authorization) {
+        return res.status(401).send({ error: true, message: 'unauthorized access' })
+    }
+    const token = authorization.split(' ')[1]
 
+    // verify 
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (error, decoded) => {
+        if (error) {
+            return res.status(401).send({ error: true, message: 'unauthorized access' })
+        }
+        req.decoded = decoded
+        next()
+
+    })
+
+
+
+}
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@artzone.efur78y.mongodb.net/?retryWrites=true&w=majority`;
 
@@ -41,6 +62,14 @@ async function run() {
 
         const serviceCollection = client.db('artZone').collection('services')
         const userCollection = client.db('artZone').collection('users')
+
+        // create token 
+        app.post('/jwt', (req, res) => {
+            const user = req.body;
+            const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1d' })
+            res.send({ token: token })
+        })
+
 
         app.get('/services', async (req, res) => {
             const result = await serviceCollection.find().toArray()
