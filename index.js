@@ -62,6 +62,8 @@ async function run() {
 
         const serviceCollection = client.db('artZone').collection('services')
         const userCollection = client.db('artZone').collection('users')
+        const classCollection = client.db('artZone').collection('classes')
+        const teacherCollection = client.db('artZone').collection('teachers')
 
         // create token 
         app.post('/jwt', (req, res) => {
@@ -70,11 +72,6 @@ async function run() {
             res.send({ token: token })
         })
 
-
-        app.get('/services', async (req, res) => {
-            const result = await serviceCollection.find().toArray()
-            res.send(result)
-        })
 
         // add and update user 
         app.put('/users', async (req, res) => {
@@ -93,11 +90,38 @@ async function run() {
         // get user role 
         app.get('/users/:email', async (req, res) => {
             const email = req.params.email;
-
             const query = { email: email }
-
             const user = await userCollection.findOne(query)
             res.send(user)
+        })
+
+
+        // get teachrs by sort or all
+        app.get('/teachers', async (req, res) => {
+            const limit = parseInt(req.query.limit) || 0
+            const filter = {}
+            let options = {}
+            if (limit > 0) {
+                options = {
+                    sort: { students: -1 }
+                }
+            }
+
+            const result = await teacherCollection.find(filter, options).limit(limit).toArray()
+            res.send(result)
+        })
+
+        // get teachrs by sort or all
+        app.get('/classes', async (req, res) => {
+            const limit = parseInt(req.query.limit) || 0
+            const filter = {}
+            let options = {}
+            if (limit > 0) {
+                options = { sort: { enroled: -1 } }
+            }
+
+            const result = await classCollection.find(filter, options).limit(limit).toArray()
+            res.send(result)
         })
 
 
