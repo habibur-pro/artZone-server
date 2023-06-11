@@ -64,6 +64,7 @@ async function run() {
         const userCollection = client.db('artZone').collection('users')
         const classCollection = client.db('artZone').collection('classes')
         const teacherCollection = client.db('artZone').collection('teachers')
+        const selectCollection = client.db('artZone').collection('select_classes')
 
         // create token 
         app.post('/jwt', (req, res) => {
@@ -111,7 +112,7 @@ async function run() {
             res.send(result)
         })
 
-        // get teachrs by sort or all
+        // get classes by sort or all
         app.get('/classes', async (req, res) => {
             const limit = parseInt(req.query.limit) || 0
             const filter = {}
@@ -121,6 +122,13 @@ async function run() {
             }
 
             const result = await classCollection.find(filter, options).limit(limit).toArray()
+            res.send(result)
+        })
+
+        // post select item 
+        app.post('/select_classes', verifyJWT, async (req, res) => {
+            const selectItem = req.body;
+            const result = await selectCollection.insertOne(selectItem)
             res.send(result)
         })
 
