@@ -23,6 +23,7 @@ const verifyJWT = (req, res, next) => {
 
     // verify 
     jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (error, decoded) => {
+
         if (error) {
             return res.status(401).send({ error: true, message: 'unauthorized access' })
         }
@@ -149,6 +150,17 @@ async function run() {
             res.send(result)
         })
 
+        // teacher api 
+        app.post('/add_class', verifyJWT, async (req, res) => {
+
+            if (req.decoded?.email !== req.body?.teacher_email) {
+                res.status(403).send({ error: true, message: 'Forbidden' })
+            }
+            const classItem = req.body;
+            console.log(classItem)
+            const result = await classCollection.insertOne(classItem)
+            res.send(result)
+        })
 
 
 
