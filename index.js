@@ -61,7 +61,7 @@ async function run() {
         });
 
         const serviceCollection = client.db('artZone').collection('services')
-        const userCollection = client.db('artZone').collection('users')
+        const studentCollection = client.db('artZone').collection('students')
         const classCollection = client.db('artZone').collection('classes')
         const teacherCollection = client.db('artZone').collection('teachers')
         const selectCollection = client.db('artZone').collection('select_classes')
@@ -75,7 +75,7 @@ async function run() {
 
 
         // add and update user 
-        app.put('/users', async (req, res) => {
+        app.put('/students', async (req, res) => {
             const user = req.body;
             const email = req.body.email;
             const filter = { email: email }
@@ -84,15 +84,15 @@ async function run() {
                 $set: user
             }
 
-            const result = await userCollection.updateOne(filter, updatedDoc, options)
+            const result = await studentCollection.updateOne(filter, updatedDoc, options)
             res.send(result)
         })
 
         // get user role 
-        app.get('/users/:email', async (req, res) => {
+        app.get('/students/:email', async (req, res) => {
             const email = req.params.email;
             const query = { email: email }
-            const user = await userCollection.findOne(query)
+            const user = await studentCollection.findOne(query)
             res.send(user)
         })
 
