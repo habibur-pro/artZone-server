@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan')
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const jwt = require('jsonwebtoken');
 require('dotenv').config()
 const app = express()
@@ -132,6 +132,22 @@ async function run() {
             res.send(result)
         })
 
+        // get selected items by email 
+        app.get('/selectedItems/:email', verifyJWT, async (req, res) => {
+            const email = req.params.email;
+            console.log(email)
+            const filter = { email: email }
+            const result = await selectCollection.find(filter).toArray()
+            res.send(result)
+        })
+
+        // delete selected class 
+        app.delete('/selectedItems/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: new ObjectId(id) }
+            const result = await selectCollection.deleteOne(filter)
+            res.send(result)
+        })
 
 
 
