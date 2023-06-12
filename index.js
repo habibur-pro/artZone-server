@@ -233,6 +233,13 @@ async function run() {
             res.send(result)
         })
 
+        // class delete by id 
+        app.delete('/classes/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: new ObjectId(id) }
+            const result = await classCollection.deleteOne(filter)
+            res.send(result)
+        })
 
 
         // Send a ping to confirm a successful connection
