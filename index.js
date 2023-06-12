@@ -233,6 +233,21 @@ async function run() {
             res.send(result)
         })
 
+        // add feadback 
+        app.patch('/feadback/classes/:id', async (req, res) => {
+            const id = req.params.id;
+            const classFeadback = req.body
+            const filter = { _id: new ObjectId(id) }
+            const updatedDoc = {
+                $set: {
+                    feadback: classFeadback.feadback
+                }
+            }
+
+            const result = await classCollection.updateOne(filter, updatedDoc)
+            res.send(result)
+        })
+
         // class delete by id 
         app.delete('/classes/:id', async (req, res) => {
             const id = req.params.id;
