@@ -192,6 +192,19 @@ async function run() {
             res.send(result)
         })
 
+        // update class status 
+        app.patch('/classes/:id', verifyJWT, async (req, res) => {
+            const id = req.params.id;
+            const classStatus = req.body
+            const filter = { _id: new ObjectId(id) }
+            const updatedDoc = {
+                $set: {
+                    status: classStatus.status
+                }
+            }
+            const result = await classCollection.updateOne(filter, updatedDoc)
+            res.send(result)
+        })
 
 
 
