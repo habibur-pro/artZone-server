@@ -66,6 +66,7 @@ async function run() {
         const classCollection = client.db('artZone').collection('classes')
         const teacherCollection = client.db('artZone').collection('teachers')
         const selectCollection = client.db('artZone').collection('select_classes')
+        const enroledCollection = client.db('artZone').collection('enroled_classes')
 
         // create token 
         app.post('/jwt', (req, res) => {
@@ -129,6 +130,7 @@ async function run() {
         // post select item 
         app.post('/select_classes', verifyJWT, async (req, res) => {
             const selectItem = req.body;
+            console.log('select item', selectItem)
             const result = await selectCollection.insertOne(selectItem)
             res.send(result)
         })
@@ -192,6 +194,16 @@ async function run() {
             res.send(result)
         })
 
+
+        // get class by id 
+        app.get('/myClasses/:id', verifyJWT, async (req, res) => {
+            const id = req.params.id;
+            console.log('amar sonar bangla ami tomay', id)
+            const filter = { _id: new ObjectId(id) }
+            const result = await classCollection.findOne(filter)
+            res.send(result)
+        })
+
         // update class status 
         app.patch('/classes/:id', verifyJWT, async (req, res) => {
             const id = req.params.id;
@@ -200,6 +212,21 @@ async function run() {
             const updatedDoc = {
                 $set: {
                     status: classStatus.status
+                }
+            }
+            const result = await classCollection.updateOne(filter, updatedDoc)
+            res.send(result)
+        })
+
+        // update class 
+        app.put('/classes/:id', verifyJWT, async (req, res) => {
+            const id = req.params.id;
+            const updateClass = req.body
+            const filter = { _id: new ObjectId(id) }
+            console.log(updateClass)
+            const updatedDoc = {
+                $set: {
+                    ...updateClass
                 }
             }
             const result = await classCollection.updateOne(filter, updatedDoc)
