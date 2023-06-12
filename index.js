@@ -161,6 +161,36 @@ async function run() {
             const result = await classCollection.insertOne(classItem)
             res.send(result)
         })
+        // get class by teacher email 
+        app.get('/classes/:email', async (req, res) => {
+            const email = req.params.email;
+            const filter = { teacher_email: email }
+            console.log(filter)
+            const result = await classCollection.find(filter).toArray()
+
+            res.send(result)
+        })
+
+        // admin route 
+        app.get('/users', verifyJWT, async (req, res) => {
+            const result = await studentCollection.find().toArray()
+            res.send(result)
+        })
+
+        // make admin 
+        app.patch('/users/:email', verifyJWT, async (req, res) => {
+            const email = req.params.email
+            const userRole = req.body;
+            console.log(userRole)
+            const filter = { email: email }
+            const updatedDoc = {
+                $set: {
+                    role: userRole.role
+                }
+            }
+            const result = await studentCollection.updateOne(filter, updatedDoc)
+            res.send(result)
+        })
 
 
 
