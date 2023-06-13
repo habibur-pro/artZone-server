@@ -4,6 +4,9 @@ const morgan = require('morgan')
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const jwt = require('jsonwebtoken');
 require('dotenv').config()
+const stripe = require("stripe")(process.env.PAYMENT_SECRET_KEY)
+
+
 const app = express()
 const port = process.env.PORT || 5000
 
@@ -67,6 +70,31 @@ async function run() {
         const teacherCollection = client.db('artZone').collection('teachers')
         const selectCollection = client.db('artZone').collection('select_classes')
         const enroledCollection = client.db('artZone').collection('enroled_classes')
+        const paymentHistoryCollection = client.db('artZone').collection('payment_history')
+
+        // create payment intent 
+        app.post('/create_payment_intent', async (req, res) => {
+            const { price } = req.body;
+
+            if (price) {
+                const amount = parseFloat(price) * 100;
+
+                const paymentIntent = await stripe.paymentIntents.create({
+                    amount: amount,
+                    currency: 'usd',
+                    payment_method_types: ['card'],
+
+                })
+                res.send({ client_secret: paymentIntent.client_secret })
+            }
+        })
+
+        // save payment history 
+        app.post('/payment_history', async (req, res) => {
+            const payment = req.body;
+            const result = await paymentHistoryCollection.insertOne(payment)
+            res.send(result)
+        })
 
         // create token 
         app.post('/jwt', (req, res) => {
@@ -204,18 +232,67 @@ async function run() {
             res.send(result)
         })
 
-        // update class status 
-        app.patch('/classes/:id', verifyJWT, async (req, res) => {
-            const id = req.params.id;
-            const classStatus = req.body
+        // get selected class by id 
+        app.get('/selected_classes/:id', async (req, res) => {
+            const id = req.params.id
             const filter = { _id: new ObjectId(id) }
+            const result = await selectCollection.findOne(filter)
+            res.send(result)
+        })
+
+        // update class status and seat
+        app.put('/classes/:id', async (req, res) => {
+            const id = req.params.id;
+            const classInfo = req.body
+
+            const filter = { _id: new ObjectId(id) }
+            const options = { upsert: true }
             const updatedDoc = {
+                $set: { status: classInfo.status }
+            }
+
+            const result = await classCollection.updateOne(filter, updatedDoc, options)
+            res.send(result)
+        })
+
+        // save payment history,
+        /*  update seats,
+            update enroled count
+            add enroled class 
+            delete selected items,
+         */
+        app.post('/payment', async (req, res) => {
+            const paymentInfo = req.body;
+
+            // save payment history 
+            const saved_history_result = await paymentHistoryCollection.insertOne(paymentInfo.payment_history)
+
+
+
+            const class_update_filter = { _id: new ObjectId(paymentInfo.update_class.classId) }
+            const class_update_doc = {
                 $set: {
-                    status: classStatus.status
+                    seats: paymentInfo?.update_class.seats,
+                    enroled: paymentInfo?.update_class.enroled
                 }
             }
-            const result = await classCollection.updateOne(filter, updatedDoc)
-            res.send(result)
+            // update seats 
+            const class_update_result = await classCollection.updateOne(class_update_filter, class_update_doc)
+
+
+            // update enroled 
+            // const update_enroled_result =
+
+            // saved to enroled class 
+            const save_enrole_result = await enroledCollection.insertOne(paymentInfo.enroled_info)
+
+
+            // deleted selected class 
+            const delete_selected_filter = { _id: new ObjectId(paymentInfo.selectedId) }
+            const delete_selected_result = await selectCollection.deleteOne(delete_selected_filter)
+
+
+            res.send(delete_selected_result)
         })
 
         // update class 
