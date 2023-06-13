@@ -240,6 +240,14 @@ async function run() {
             res.send(result)
         })
 
+        // get enroled class by email 
+        app.get('/enroledClasses/:email', async (req, res) => {
+            const email = req.params.email;
+            const fileter = { email: email }
+            const result = await enroledCollection.find(fileter).toArray()
+            res.send(result)
+        })
+
         // update class status and seat
         app.put('/classes/:id', async (req, res) => {
             const id = req.params.id;
