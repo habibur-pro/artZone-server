@@ -314,8 +314,7 @@ async function run() {
                 }
             }
 
-            console.log('update_teacher_enroled_filter', update_teacher_enroled_filter)
-            console.log('update_teacher_enroled_UpdateDoc', update_teacher_enroled_UpdateDoc)
+
 
             const update_teacher_enroled_result = await studentCollection.updateOne(update_teacher_enroled_filter, update_teacher_enroled_UpdateDoc)
 
