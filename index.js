@@ -130,7 +130,7 @@ async function run() {
         // get teachrs by sort or all
         app.get('/teachers', async (req, res) => {
             const limit = parseInt(req.query.limit) || 0
-            const filter = {}
+            const filter = { role: 'teacher' }
             let options = {}
             if (limit > 0) {
                 options = {
@@ -138,7 +138,7 @@ async function run() {
                 }
             }
 
-            const result = await teacherCollection.find(filter, options).limit(limit).toArray()
+            const result = await studentCollection.find(filter, options).limit(limit).toArray()
             res.send(result)
         })
 
@@ -248,8 +248,16 @@ async function run() {
             res.send(result)
         })
 
-        // update class status and seat
-        app.put('/classes/:id', async (req, res) => {
+        // get payment history 
+        app.get('/payment_history/:email', verifyJWT, async (req, res) => {
+            const email = req.params.email;
+            const fileter = { email: email }
+            const result = await paymentHistoryCollection.find(fileter).toArray()
+            res.send(result)
+        })
+
+        // update class status 
+        app.patch('/classes/:id', async (req, res) => {
             const id = req.params.id;
             const classInfo = req.body
 
@@ -271,6 +279,8 @@ async function run() {
          */
         app.post('/payment', async (req, res) => {
             const paymentInfo = req.body;
+
+            console.log('paymentInfo', paymentInfo)
 
             // save payment history 
             const saved_history_result = await paymentHistoryCollection.insertOne(paymentInfo.payment_history)
@@ -294,6 +304,24 @@ async function run() {
             // saved to enroled class 
             const save_enrole_result = await enroledCollection.insertOne(paymentInfo.enroled_info)
 
+            // update teacter enroled 
+            const update_teacher_enroled_filter = {
+                email: paymentInfo?.enroled_info?.teacher_email,
+            }
+            const update_teacher_enroled_UpdateDoc = {
+                $set: {
+                    students: paymentInfo?.update_class?.enroled
+                }
+            }
+
+            console.log('update_teacher_enroled_filter', update_teacher_enroled_filter)
+            console.log('update_teacher_enroled_UpdateDoc', update_teacher_enroled_UpdateDoc)
+
+            const update_teacher_enroled_result = await studentCollection.updateOne(update_teacher_enroled_filter, update_teacher_enroled_UpdateDoc)
+
+
+
+            console.log("update_teacher_enroled_result", update_teacher_enroled_result)
 
             // deleted selected class 
             const delete_selected_filter = { _id: new ObjectId(paymentInfo.selectedId) }
