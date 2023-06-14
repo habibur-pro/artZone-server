@@ -77,7 +77,7 @@ async function run() {
             const email = req.decoded.email;
             const filter = { email: email }
             const result = await studentCollection.findOne(filter)
-            console.log('check admin', result)
+
 
             if (result?.role !== 'admin') {
                 return res.status(401).send({ error: true, message: 'access forbidden' })
@@ -90,7 +90,7 @@ async function run() {
             const email = req.decoded.email;
             const filter = { email: email }
             const result = await studentCollection.findOne(filter)
-            console.log('check admin', result)
+
 
             if (result?.role !== 'teacher') {
                 return res.status(401).send({ error: true, message: 'access forbidden' })
@@ -181,7 +181,7 @@ async function run() {
         // post select item 
         app.post('/select_classes', verifyJWT, async (req, res) => {
             const selectItem = req.body;
-            console.log('select item', selectItem)
+
             const result = await selectCollection.insertOne(selectItem)
             res.send(result)
         })
@@ -192,7 +192,7 @@ async function run() {
                 res.status(403).send({ error: true, message: 'Forbidden' })
             }
             const email = req.params.email;
-            console.log(email)
+
             const filter = { email: email }
             const result = await selectCollection.find(filter).toArray()
             res.send(result)
@@ -214,7 +214,7 @@ async function run() {
                 res.status(403).send({ error: true, message: 'Forbidden' })
             }
             const classItem = req.body;
-            console.log(classItem)
+
             const result = await classCollection.insertOne(classItem)
             res.send(result)
         })
@@ -225,7 +225,7 @@ async function run() {
             }
             const email = req.params.email;
             const filter = { teacher_email: email }
-            console.log(filter)
+
             const result = await classCollection.find(filter).toArray()
 
             res.send(result)
@@ -241,7 +241,7 @@ async function run() {
         app.patch('/users/:email', verifyJWT, verifyAdmin, async (req, res) => {
             const email = req.params.email
             const userRole = req.body;
-            console.log(userRole)
+
             const filter = { email: email }
             // const logged_admin_filter = { email: userRole?.logged_admin }
             const updatedDoc = {
@@ -266,7 +266,7 @@ async function run() {
         // get class by id 
         app.get('/myClasses/:id', verifyJWT, verifyTeacher, async (req, res) => {
             const id = req.params.id;
-            console.log('amar sonar bangla ami tomay', id)
+
             const filter = { _id: new ObjectId(id) }
             const result = await classCollection.findOne(filter)
             res.send(result)
@@ -326,8 +326,6 @@ async function run() {
         app.post('/payment', verifyJWT, async (req, res) => {
             const paymentInfo = req.body;
 
-            console.log('paymentInfo', paymentInfo)
-
             // save payment history 
             const saved_history_result = await paymentHistoryCollection.insertOne(paymentInfo.payment_history)
 
@@ -365,9 +363,6 @@ async function run() {
             const update_teacher_enroled_result = await studentCollection.updateOne(update_teacher_enroled_filter, update_teacher_enroled_UpdateDoc)
 
 
-
-            console.log("update_teacher_enroled_result", update_teacher_enroled_result)
-
             // deleted selected class 
             const delete_selected_filter = { _id: new ObjectId(paymentInfo.selectedId) }
             const delete_selected_result = await selectCollection.deleteOne(delete_selected_filter)
@@ -381,7 +376,7 @@ async function run() {
             const id = req.params.id;
             const updateClass = req.body
             const filter = { _id: new ObjectId(id) }
-            console.log(updateClass)
+
             const updatedDoc = {
                 $set: {
                     ...updateClass
