@@ -243,12 +243,22 @@ async function run() {
             const userRole = req.body;
             console.log(userRole)
             const filter = { email: email }
+            // const logged_admin_filter = { email: userRole?.logged_admin }
             const updatedDoc = {
                 $set: {
                     role: userRole.role
                 }
             }
+
+            // const logged_admin_updateDoc = {
+            //     $set: {
+            //         role: ''
+            //     }
+            // }
+
+
             const result = await studentCollection.updateOne(filter, updatedDoc)
+            // const removeAdmin = await studentCollection.updateOne(logged_admin_filter, logged_admin_updateDoc)
             res.send(result)
         })
 
