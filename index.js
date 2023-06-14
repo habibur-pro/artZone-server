@@ -72,6 +72,34 @@ async function run() {
         const enroledCollection = client.db('artZone').collection('enroled_classes')
         const paymentHistoryCollection = client.db('artZone').collection('payment_history')
 
+
+        const verifyAdmin = async (req, res, next) => {
+            const email = req.decoded.email;
+            const filter = { email: email }
+            const result = await studentCollection.findOne(filter)
+            console.log('check admin', result)
+
+            if (result?.role !== 'admin') {
+                return res.status(401).send({ error: true, message: 'access forbidden' })
+            }
+            next()
+        }
+
+        // verify teacher 
+        const verifyTeacher = async (req, res, next) => {
+            const email = req.decoded.email;
+            const filter = { email: email }
+            const result = await studentCollection.findOne(filter)
+            console.log('check admin', result)
+
+            if (result?.role !== 'teacher') {
+                return res.status(401).send({ error: true, message: 'access forbidden' })
+            } else {
+                next()
+            }
+
+        }
+
         // create payment intent 
         app.post('/create_payment_intent', async (req, res) => {
             const { price } = req.body;
@@ -89,12 +117,7 @@ async function run() {
             }
         })
 
-        // save payment history 
-        app.post('/payment_history', async (req, res) => {
-            const payment = req.body;
-            const result = await paymentHistoryCollection.insertOne(payment)
-            res.send(result)
-        })
+
 
         // create token 
         app.post('/jwt', (req, res) => {
@@ -165,6 +188,9 @@ async function run() {
 
         // get selected items by email 
         app.get('/selectedItems/:email', verifyJWT, async (req, res) => {
+            if (req.decoded?.email !== req.params.email) {
+                res.status(403).send({ error: true, message: 'Forbidden' })
+            }
             const email = req.params.email;
             console.log(email)
             const filter = { email: email }
@@ -181,7 +207,8 @@ async function run() {
         })
 
         // teacher api 
-        app.post('/add_class', verifyJWT, async (req, res) => {
+        // create a new class 
+        app.post('/add_class', verifyJWT, verifyTeacher, async (req, res) => {
 
             if (req.decoded?.email !== req.body?.teacher_email) {
                 res.status(403).send({ error: true, message: 'Forbidden' })
@@ -192,7 +219,10 @@ async function run() {
             res.send(result)
         })
         // get class by teacher email 
-        app.get('/classes/:email', async (req, res) => {
+        app.get('/classes/:email', verifyJWT, verifyTeacher, async (req, res) => {
+            if (req.decoded.email !== req?.params?.email) {
+                return res.status(403).send({ error: true, message: 'Forbidden' })
+            }
             const email = req.params.email;
             const filter = { teacher_email: email }
             console.log(filter)
@@ -202,13 +232,13 @@ async function run() {
         })
 
         // admin route 
-        app.get('/users', verifyJWT, async (req, res) => {
+        app.get('/users', verifyJWT, verifyAdmin, async (req, res) => {
             const result = await studentCollection.find().toArray()
             res.send(result)
         })
 
         // make admin 
-        app.patch('/users/:email', verifyJWT, async (req, res) => {
+        app.patch('/users/:email', verifyJWT, verifyAdmin, async (req, res) => {
             const email = req.params.email
             const userRole = req.body;
             console.log(userRole)
@@ -224,7 +254,7 @@ async function run() {
 
 
         // get class by id 
-        app.get('/myClasses/:id', verifyJWT, async (req, res) => {
+        app.get('/myClasses/:id', verifyJWT, verifyTeacher, async (req, res) => {
             const id = req.params.id;
             console.log('amar sonar bangla ami tomay', id)
             const filter = { _id: new ObjectId(id) }
@@ -241,7 +271,10 @@ async function run() {
         })
 
         // get enroled class by email 
-        app.get('/enroledClasses/:email', async (req, res) => {
+        app.get('/enroledClasses/:email', verifyJWT, async (req, res) => {
+            if (req.decoded.email !== req.params.email) {
+                return res.status(403).send({ error: true, message: 'Forbidden' })
+            }
             const email = req.params.email;
             const fileter = { email: email }
             const result = await enroledCollection.find(fileter).toArray()
@@ -250,6 +283,9 @@ async function run() {
 
         // get payment history 
         app.get('/payment_history/:email', verifyJWT, async (req, res) => {
+            if (req.decoded.email !== req.params.email) {
+                return res.status(403).send({ error: true, message: 'Forbidden' })
+            }
             const email = req.params.email;
             const fileter = { email: email }
             const result = await paymentHistoryCollection.find(fileter).toArray()
@@ -257,7 +293,7 @@ async function run() {
         })
 
         // update class status 
-        app.patch('/classes/:id', async (req, res) => {
+        app.patch('/classes/:id', verifyJWT, verifyAdmin, async (req, res) => {
             const id = req.params.id;
             const classInfo = req.body
 
@@ -277,7 +313,7 @@ async function run() {
             add enroled class 
             delete selected items,
          */
-        app.post('/payment', async (req, res) => {
+        app.post('/payment', verifyJWT, async (req, res) => {
             const paymentInfo = req.body;
 
             console.log('paymentInfo', paymentInfo)
@@ -346,7 +382,7 @@ async function run() {
         })
 
         // add feadback 
-        app.patch('/feadback/classes/:id', async (req, res) => {
+        app.patch('/feadback/classes/:id', verifyJWT, verifyAdmin, async (req, res) => {
             const id = req.params.id;
             const classFeadback = req.body
             const filter = { _id: new ObjectId(id) }
